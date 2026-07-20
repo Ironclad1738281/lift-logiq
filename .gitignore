@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+.pnpm-debug.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -70,6 +71,10 @@ web_modules/
 .env.*
 !.env.example
 
+# Local OS and certificate files
+.DS_Store
+*.pem
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -129,6 +134,7 @@ dist
 .pnpm-store
 
 # yarn v3
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -136,6 +142,9 @@ dist
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Vercel
+.vercel
 
 # Vite files
 vite.config.js.timestamp-*
