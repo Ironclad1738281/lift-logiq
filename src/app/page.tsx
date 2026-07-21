@@ -17,7 +17,7 @@ export default function Home() {
           patterns before they slow down your progress.
         </p>
 
-        <div className="mt-10 flex gap-4">
+        <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
             href="/workouts/new"
             className="rounded-lg bg-emerald-500 px-6 py-3 font-semibold text-slate-950 hover:bg-emerald-400"
@@ -31,6 +31,14 @@ export default function Home() {
           >
             View dashboard
           </Link>
+
+          <Link
+            href="/recovery/new"
+            className="rounded-lg border border-emerald-500 px-6 py-3 font-semibold text-emerald-400 hover:bg-emerald-950"
+          >
+            Recovery check-in
+          </Link>
+
         </div>
       </section>
     </main>
