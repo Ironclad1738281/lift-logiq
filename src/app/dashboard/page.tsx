@@ -74,6 +74,101 @@ function calculateAverage(values: number[]) {
   return Math.round((total / values.length) * 10) / 10;
 }
 
+type RiskAssessment = {
+  score: number;
+  level: "Low" | "Moderate" | "Elevated" | "High";
+  reasons: string[];
+};
+
+function calculateRiskAssessment(
+  workouts: Workout[],
+  checkIns: RecoveryCheckIn[],
+): RiskAssessment {
+  let score = 0;
+  const reasons: string[] = [];
+
+  const averageSleep = calculateAverage(
+    checkIns.map((checkIn) => checkIn.sleep),
+  );
+
+  const averageSoreness = calculateAverage(
+    checkIns.map((checkIn) => checkIn.soreness),
+  );
+
+  const averageEnergy = calculateAverage(
+    checkIns.map((checkIn) => checkIn.energy),
+  );
+
+  const highestPainLevel = Math.max(
+    ...checkIns.map((checkIn) => checkIn.painLevel),
+  );
+
+  const highIntensityWorkouts = workouts.filter(
+    (workout) => workout.rpe >= 8,
+  ).length;
+
+  if (averageSleep < 6) {
+    score += 25;
+    reasons.push("Average sleep is below 6 hours.");
+  } else if (averageSleep < 7) {
+    score += 15;
+    reasons.push("Average sleep is below 7 hours.");
+  }
+
+  if (averageSoreness >= 7) {
+    score += 20;
+    reasons.push("Average soreness is high.");
+  } else if (averageSoreness >= 5) {
+    score += 10;
+    reasons.push("Average soreness is moderately elevated.");
+  }
+
+  if (averageEnergy <= 4) {
+    score += 15;
+    reasons.push("Average energy is low.");
+  } else if (averageEnergy <= 6) {
+    score += 8;
+    reasons.push("Average energy is slightly reduced.");
+  }
+
+  if (highestPainLevel >= 5) {
+    score += 25;
+    reasons.push("A recent check-in reported significant pain.");
+  } else if (highestPainLevel > 0) {
+    score += 10;
+    reasons.push("Pain was reported in a recent check-in.");
+  }
+
+  if (highIntensityWorkouts >= 2) {
+    score += 15;
+    reasons.push("Multiple recent workouts had an RPE of 8 or higher.");
+  } else if (highIntensityWorkouts === 1) {
+    score += 8;
+    reasons.push("A recent workout had a high intensity.");
+  }
+
+  const finalScore = Math.min(score, 100);
+
+  const level =
+    finalScore >= 75
+      ? "High"
+      : finalScore >= 50
+        ? "Elevated"
+        : finalScore >= 25
+          ? "Moderate"
+          : "Low";
+
+  if (reasons.length === 0) {
+    reasons.push("No major recovery-risk factors were detected.");
+  }
+
+  return {
+    score: finalScore,
+    level,
+    reasons,
+  };
+}
+
 export default function DashboardPage() {
   const weeklyVolume = workouts.reduce((total, workout) => {
     const exerciseVolume =
@@ -94,19 +189,19 @@ export default function DashboardPage() {
     recoveryCheckIns.map((checkIn) => checkIn.energy),
   );
 
-  const recoveryStatus =
-    averageSleep < 6.5 || averageSoreness >= 7
-      ? "Elevated"
-      : averageSleep < 7 || averageSoreness >= 5
-        ? "Moderate"
-        : "Low";
+  const riskAssessment = calculateRiskAssessment(
+    workouts,
+    recoveryCheckIns,
+  );
 
   const recoveryStatusClasses =
-    recoveryStatus === "Elevated"
-      ? "border-red-800 bg-red-950 text-red-300"
-      : recoveryStatus === "Moderate"
-        ? "border-amber-800 bg-amber-950 text-amber-300"
-        : "border-emerald-800 bg-emerald-950 text-emerald-300";
+    riskAssessment.level === "High"
+        ? "border-red-800 bg-red-950 text-red-300"
+        : riskAssessment.level === "Elevated"
+            ? "border-orange-800 bg-orange-950 text-orange-300"
+            : riskAssessment.level === "Moderate"
+                ? "border-amber-800 bg-amber-950 text-amber-300"
+                : "border-emerald-800 bg-emerald-950 text-emerald-300";
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -177,23 +272,35 @@ export default function DashboardPage() {
         </div>
 
         <section className="mt-8">
-          <div
-            className={`rounded-xl border p-6 ${recoveryStatusClasses}`}
-          >
-            <p className="text-sm font-medium uppercase tracking-wider">
-              Current recovery status
-            </p>
+  <div
+    className={`rounded-xl border p-6 ${recoveryStatusClasses}`}
+  >
+    <p className="text-sm font-medium uppercase tracking-wider">
+      Current recovery-risk assessment
+    </p>
 
-            <p className="mt-2 text-3xl font-bold">
-              {recoveryStatus}
-            </p>
+    <div className="mt-3 flex flex-wrap items-end gap-4">
+      <p className="text-4xl font-bold">
+        {riskAssessment.score}/100
+      </p>
 
-            <p className="mt-2 text-sm">
-              This temporary status is calculated from average sleep and
-              soreness using mock recovery data.
-            </p>
-          </div>
-        </section>
+      <p className="pb-1 text-xl font-semibold">
+        {riskAssessment.level}
+      </p>
+    </div>
+
+    <ul className="mt-5 space-y-2 text-sm">
+      {riskAssessment.reasons.map((reason) => (
+        <li key={reason}>• {reason}</li>
+      ))}
+    </ul>
+
+    <p className="mt-5 text-xs opacity-75">
+      This score is an informational training indicator and is not a
+      medical diagnosis.
+    </p>
+  </div>
+</section>
 
         <section className="mt-10">
           <div className="flex items-center justify-between">
