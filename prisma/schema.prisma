@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  ELEVATED
+  HIGH
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workouts         Workout[]
+  recoveryCheckIns RecoveryCheckIn[]
+  riskScores       RiskScore[]
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  performedAt DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseLogs ExerciseLog[]
+
+  @@index([userId, performedAt])
+}
+
+model ExerciseLog {
+  id           String   @id @default(cuid())
+  workoutId    String
+  exerciseName String
+  muscleGroup  String
+  sets         Int
+  reps         Int
+  weight       Float
+  rpe          Float
+  createdAt    DateTime @default(now())
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@index([workoutId])
+}
+
+model RecoveryCheckIn {
+  id           String   @id @default(cuid())
+  userId       String
+  recordedAt   DateTime @default(now())
+  sleepHours   Float
+  soreness     Int
+  energy       Int
+  painLevel    Int
+  painLocation String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+}
+
+model RiskScore {
+  id           String    @id @default(cuid())
+  userId       String
+  calculatedAt DateTime  @default(now())
+  score        Int
+  level        RiskLevel
+  reasons      Json
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, calculatedAt])
+}
